@@ -4,37 +4,60 @@
 #define BAUD_RATE 9600
 #define DELAY_1 1000
 #define DELAY_SHORT 500
+#define DELAY_BUTTON_RESPONSE 2000
+#define DELAY_DEBOUNCE 50
 #define NUM_LEDS 3
+#define NUM_BUTTONS 3
 
 // LED Configuration
 const int LED_PINS[NUM_LEDS] = {16, 17, 5};
-const char* LED_NAMES[NUM_LEDS] = {"SERVICE", "BILL", "HELP"};
+const char* LED_NAMES[NUM_LEDS] = {"SERVICE", "BILL", "MENU"};
+
+// Button Configuration
+const int BUTTON_PINS[NUM_BUTTONS] = {18, 19, 21};
+const char* BUTTON_NAMES[NUM_BUTTONS] = {"SERVICE", "BILL", "MENU"};
+
+// Button state tracking
+bool lastButtonStates[NUM_BUTTONS] = {HIGH, HIGH, HIGH};
 
 // Function declarations
 void initializeLEDs();
+void initializeButtons();
 void controlLED(int ledIndex, bool state);
 void controlAllLEDs(bool state);
+void blinkLED(int ledIndex, int duration);
 void testLEDSequence();
 void testAllLEDsTogether();
-void blinkLED(int ledIndex, int duration);
+void checkButtons();
+void handleButtonPress(int buttonIndex);
 
 void setup() {
   Serial.begin(BAUD_RATE);
   initializeLEDs();
-  Serial.println("=== Lumi Cube LED Test ===");
+  initializeButtons();
+  
+  Serial.println("=== Lumi Cube Complete Test ===");
+  testAllLEDsTogether(); // Quick LED test on startup
+  Serial.println("Press buttons to test functionality!");
 }
 
 void loop() {
-  testLEDSequence();
-  testAllLEDsTogether();
-  delay(DELAY_1);
+  checkButtons();
+  delay(DELAY_DEBOUNCE);
 }
 
 // Initialize all LED pins
 void initializeLEDs() {
   for (int i = 0; i < NUM_LEDS; i++) {
     pinMode(LED_PINS[i], OUTPUT);
-    digitalWrite(LED_PINS[i], LOW); // Ensure all start OFF
+    digitalWrite(LED_PINS[i], LOW);
+  }
+}
+
+// Initialize all button pins
+void initializeButtons() {
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    pinMode(BUTTON_PINS[i], INPUT_PULLUP);
   }
 }
 
@@ -59,24 +82,41 @@ void blinkLED(int ledIndex, int duration) {
   controlLED(ledIndex, LOW);
 }
 
-// Test LEDs in sequence
-void testLEDSequence() {
-  Serial.println("Testing LEDs in sequence...");
-  
-  for (int i = 0; i < NUM_LEDS; i++) {
-    Serial.println(LED_NAMES[i]);
-    blinkLED(i, DELAY_SHORT);
-    delay(DELAY_SHORT);
+// Test all LEDs together (startup test)
+void testAllLEDsTogether() {
+  Serial.println("Testing all LEDs...");
+  controlAllLEDs(HIGH);
+  delay(DELAY_1);
+  controlAllLEDs(LOW);
+  delay(DELAY_SHORT);
+}
+
+// Check all buttons for presses
+void checkButtons() {
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    bool currentState = digitalRead(BUTTON_PINS[i]);
+    
+    // Button pressed (HIGH to LOW transition with pullup)
+    if (lastButtonStates[i] == HIGH && currentState == LOW) {
+      handleButtonPress(i);
+    }
+    
+    lastButtonStates[i] = currentState;
   }
 }
 
-// Test all LEDs together
-void testAllLEDsTogether() {
-  Serial.println("All LEDs ON");
-  controlAllLEDs(HIGH);
-  delay(DELAY_1);
-  
-  Serial.println("All LEDs OFF");
-  controlAllLEDs(LOW);
-  delay(DELAY_SHORT);
+// Handle individual button press
+void handleButtonPress(int buttonIndex) {
+  if (buttonIndex >= 0 && buttonIndex < NUM_BUTTONS) {
+    Serial.print(BUTTON_NAMES[buttonIndex]);
+    Serial.println(" request activated!");
+    
+    // Light corresponding LED for response time
+    controlLED(buttonIndex, HIGH);
+    delay(DELAY_BUTTON_RESPONSE);
+    controlLED(buttonIndex, LOW);
+    
+    Serial.print(BUTTON_NAMES[buttonIndex]);
+    Serial.println(" request completed!");
+  }
 }
