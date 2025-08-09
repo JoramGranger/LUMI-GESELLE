@@ -1,9 +1,7 @@
 #include <Arduino.h>
 
-#define BAUD_RATE 9600
-
 void setup() {
-  Serial.begin(BAUD_RATE);
+  Serial.begin(115200);
   delay(1000);
   Serial.println("HELLO FROM ESP32!");
 }
