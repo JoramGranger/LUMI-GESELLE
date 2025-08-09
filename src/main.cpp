@@ -4,75 +4,79 @@
 #define BAUD_RATE 9600
 #define DELAY_1 1000
 #define DELAY_SHORT 500
+#define NUM_LEDS 3
 
-// LED Pin Definitions
-#define LED_SERVICE_PIN 16
-#define LED_BILL_PIN 17
-#define LED_HELP_PIN 5
+// LED Configuration
+const int LED_PINS[NUM_LEDS] = {16, 17, 5};
+const char* LED_NAMES[NUM_LEDS] = {"SERVICE", "BILL", "HELP"};
 
 // Function declarations
+void initializeLEDs();
+void controlLED(int ledIndex, bool state);
+void controlAllLEDs(bool state);
 void testLEDSequence();
 void testAllLEDsTogether();
+void blinkLED(int ledIndex, int duration);
 
 void setup() {
-  // Initialize serial communication
   Serial.begin(BAUD_RATE);
-  
-  // Configure LED pins as output
-  pinMode(LED_SERVICE_PIN, OUTPUT);
-  pinMode(LED_BILL_PIN, OUTPUT);
-  pinMode(LED_HELP_PIN, OUTPUT);
-  
-  // Startup message
+  initializeLEDs();
   Serial.println("=== Lumi Cube LED Test ===");
 }
 
 void loop() {
-  // Test all LEDs in sequence
   testLEDSequence();
-  
-  // Test all LEDs together
   testAllLEDsTogether();
-  
-  // Wait before repeating
   delay(DELAY_1);
 }
 
+// Initialize all LED pins
+void initializeLEDs() {
+  for (int i = 0; i < NUM_LEDS; i++) {
+    pinMode(LED_PINS[i], OUTPUT);
+    digitalWrite(LED_PINS[i], LOW); // Ensure all start OFF
+  }
+}
+
+// Control individual LED by index
+void controlLED(int ledIndex, bool state) {
+  if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
+    digitalWrite(LED_PINS[ledIndex], state);
+  }
+}
+
+// Control all LEDs at once
+void controlAllLEDs(bool state) {
+  for (int i = 0; i < NUM_LEDS; i++) {
+    digitalWrite(LED_PINS[i], state);
+  }
+}
+
+// Blink specific LED for duration
+void blinkLED(int ledIndex, int duration) {
+  controlLED(ledIndex, HIGH);
+  delay(duration);
+  controlLED(ledIndex, LOW);
+}
+
+// Test LEDs in sequence
 void testLEDSequence() {
   Serial.println("Testing LEDs in sequence...");
   
-  // Service LED
-  Serial.println("SERVICE LED");
-  digitalWrite(LED_SERVICE_PIN, HIGH);
-  delay(DELAY_SHORT);
-  digitalWrite(LED_SERVICE_PIN, LOW);
-  delay(DELAY_SHORT);
-  
-  // Bill LED
-  Serial.println("BILL LED");
-  digitalWrite(LED_BILL_PIN, HIGH);
-  delay(DELAY_SHORT);
-  digitalWrite(LED_BILL_PIN, LOW);
-  delay(DELAY_SHORT);
-  
-  // Help LED
-  Serial.println("HELP LED");
-  digitalWrite(LED_HELP_PIN, HIGH);
-  delay(DELAY_SHORT);
-  digitalWrite(LED_HELP_PIN, LOW);
-  delay(DELAY_SHORT);
+  for (int i = 0; i < NUM_LEDS; i++) {
+    Serial.println(LED_NAMES[i]);
+    blinkLED(i, DELAY_SHORT);
+    delay(DELAY_SHORT);
+  }
 }
 
+// Test all LEDs together
 void testAllLEDsTogether() {
   Serial.println("All LEDs ON");
-  digitalWrite(LED_SERVICE_PIN, HIGH);
-  digitalWrite(LED_BILL_PIN, HIGH);
-  digitalWrite(LED_HELP_PIN, HIGH);
+  controlAllLEDs(HIGH);
   delay(DELAY_1);
   
   Serial.println("All LEDs OFF");
-  digitalWrite(LED_SERVICE_PIN, LOW);
-  digitalWrite(LED_BILL_PIN, LOW);
-  digitalWrite(LED_HELP_PIN, LOW);
+  controlAllLEDs(LOW);
   delay(DELAY_SHORT);
 }
